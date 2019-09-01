@@ -59,18 +59,26 @@ void out_signal (ssh_session session, ssh_channel channel, const char *signal, v
 {
     (void)session;
     (void)channel;
-    (void)userdata;
 
-    fprintf(stdout, "out_signal callback called with signal %s (UNEXPECTED)\n", signal);
+    stateptr state = (stateptr) userdata;
+
+    fprintf(stdout, "out_signal callback called with signal %s\n", signal);
+
+    // Forward to out channel
+    ssh_channel_request_send_signal(state->in_channel, signal);
 }
 
 void out_exit_status (ssh_session session, ssh_channel channel, int exit_status, void *userdata)
 {
     (void)session;
     (void)channel;
-    (void)userdata;
 
-    fprintf(stdout, "out_exit_status callback called with status %d (UNEXPECTED)\n", exit_status);
+    stateptr state = (stateptr) userdata;
+
+    fprintf(stdout, "out_exit_status callback called with status %d\n", exit_status);
+
+    // Forward to in channel
+    ssh_channel_request_send_exit_status(state->in_channel, exit_status);
 }
 
 void out_exit_signal (ssh_session session, ssh_channel channel, const char *signal, int core, const char *errmsg,
@@ -78,10 +86,14 @@ void out_exit_signal (ssh_session session, ssh_channel channel, const char *sign
 {
     (void)session;
     (void)channel;
-    (void)userdata;
 
-    fprintf(stdout, "out_exit_signal callback called with signal %s, core %d, error %s, lang %s (UNEXPECTED)\n",
+    stateptr state = (stateptr) userdata;
+
+    fprintf(stdout, "out_exit_signal callback called with signal %s, core %d, error %s, lang %s\n",
         signal, core, errmsg, lang);
+
+    // Forward to in channel
+    ssh_channel_request_send_exit_signal(state->in_channel, signal, core, errmsg, lang);
 }
 
 int out_pty_request (ssh_session session, ssh_channel channel, const char *term, int width, int height,
