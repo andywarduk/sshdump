@@ -15,7 +15,7 @@ int out_data (ssh_session session, ssh_channel channel, void *data, uint32_t len
     stateptr state = (stateptr) userdata;
     int fwlen;
 
-    fprintf(stderr, "out_data callback called with %d bytes (stderr %d)\n", len, is_stderr);
+    fprintf(stdout, "out_data callback called with %d bytes (stderr %d)\n", len, is_stderr);
 
     // Forward data to in channel
     if (is_stderr) {
@@ -24,7 +24,7 @@ int out_data (ssh_session session, ssh_channel channel, void *data, uint32_t len
         fwlen = ssh_channel_write(state->in_channel, data, len);
     }
 
-    fprintf(stderr, "out_data callback wrote %d bytes\n", fwlen);
+    fprintf(stdout, "out_data callback wrote %d bytes\n", fwlen);
 
     return fwlen;
 }
@@ -36,7 +36,7 @@ void out_eof (ssh_session session, ssh_channel channel, void *userdata)
 
     stateptr state = (stateptr) userdata;
 
-    fprintf(stderr, "out_eof callback called\n");
+    fprintf(stdout, "out_eof callback called\n");
 
     // Forward eof to in channel
     ssh_channel_send_eof(state->in_channel);
@@ -49,7 +49,7 @@ void out_close (ssh_session session, ssh_channel channel, void *userdata)
 
     stateptr state = (stateptr) userdata;
 
-    fprintf(stderr, "out_close callback called\n");
+    fprintf(stdout, "out_close callback called\n");
 
     // Close in channel
     destroy_in_channel(state);
@@ -61,7 +61,7 @@ void out_signal (ssh_session session, ssh_channel channel, const char *signal, v
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_signal callback called with signal %s (UNEXPECTED)\n", signal);
+    fprintf(stdout, "out_signal callback called with signal %s (UNEXPECTED)\n", signal);
 }
 
 void out_exit_status (ssh_session session, ssh_channel channel, int exit_status, void *userdata)
@@ -70,7 +70,7 @@ void out_exit_status (ssh_session session, ssh_channel channel, int exit_status,
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_exit_status callback called with status %d (UNEXPECTED)\n", exit_status);
+    fprintf(stdout, "out_exit_status callback called with status %d (UNEXPECTED)\n", exit_status);
 }
 
 void out_exit_signal (ssh_session session, ssh_channel channel, const char *signal, int core, const char *errmsg,
@@ -80,7 +80,7 @@ void out_exit_signal (ssh_session session, ssh_channel channel, const char *sign
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_exit_signal callback called with signal %s, core %d, error %s, lang %s (UNEXPECTED)\n",
+    fprintf(stdout, "out_exit_signal callback called with signal %s, core %d, error %s, lang %s (UNEXPECTED)\n",
         signal, core, errmsg, lang);
 }
 
@@ -91,7 +91,7 @@ int out_pty_request (ssh_session session, ssh_channel channel, const char *term,
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_pty_request_callback callback called with term %s, char dim %dx%d, px dim %dx%d (UNEXPECTED)\n",
+    fprintf(stdout, "out_pty_request_callback callback called with term %s, char dim %dx%d, px dim %dx%d (UNEXPECTED)\n",
         term, width, height, pxwidth, pxheight);
 
     return -1;
@@ -103,7 +103,7 @@ int out_shell_request (ssh_session session, ssh_channel channel, void *userdata)
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_shell_request callback called (UNEXPECTED)\n");
+    fprintf(stdout, "out_shell_request callback called (UNEXPECTED)\n");
 
     return 1;
 }
@@ -114,7 +114,7 @@ void out_auth_agent_req (ssh_session session, ssh_channel channel, void *userdat
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_auth_agent_req callback called (UNEXPECTED)\n");
+    fprintf(stdout, "out_auth_agent_req callback called (UNEXPECTED)\n");
 }
 
 void out_x11_req (ssh_session session, ssh_channel channel, int single_connection, const char *auth_protocol,
@@ -124,7 +124,7 @@ void out_x11_req (ssh_session session, ssh_channel channel, int single_connectio
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_x11_req callback called, single_connection %d, auth protocol %s, auth cookie %s, screen %d (UNEXPECTED)\n",
+    fprintf(stdout, "out_x11_req callback called, single_connection %d, auth protocol %s, auth cookie %s, screen %d (UNEXPECTED)\n",
         single_connection, auth_protocol, auth_cookie, screen_number);
 }
 
@@ -135,7 +135,7 @@ int out_pty_window_change (ssh_session session, ssh_channel channel, int width, 
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_pty_window_change callback called with char dim %dx%d, px dim %dx%d (UNEXPECTED)\n",
+    fprintf(stdout, "out_pty_window_change callback called with char dim %dx%d, px dim %dx%d (UNEXPECTED)\n",
         width, height, pxwidth, pxheight);
 
     return -1;
@@ -147,7 +147,7 @@ int out_exec_request (ssh_session session, ssh_channel channel, const char *comm
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_exec_request callback called, command %s (UNEXPECTED)\n", command);
+    fprintf(stdout, "out_exec_request callback called, command %s (UNEXPECTED)\n", command);
 
     return 1;
 }
@@ -158,7 +158,7 @@ int out_env_request (ssh_session session, ssh_channel channel, const char *env_n
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_env_request callback called, %s = '%s' (UNEXPECTED)\n", env_name, env_value);
+    fprintf(stdout, "out_env_request callback called, %s = '%s' (UNEXPECTED)\n", env_name, env_value);
 
     return 1;
 }
@@ -169,7 +169,7 @@ int out_subsystem_request (ssh_session session, ssh_channel channel, const char 
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_subsystem_request callback called for %s (UNEXPECTED)\n", subsystem);
+    fprintf(stdout, "out_subsystem_request callback called for %s (UNEXPECTED)\n", subsystem);
 
     return 1;
 }
@@ -180,7 +180,7 @@ int out_write_wontblock (ssh_session session, ssh_channel channel, size_t bytes,
     (void)channel;
     (void)userdata;
 
-    fprintf(stderr, "out_write_wontblock callback called with bytes = %ld\n", bytes);
+    fprintf(stdout, "out_write_wontblock callback called with bytes = %ld\n", bytes);
 
     return 0;
 }

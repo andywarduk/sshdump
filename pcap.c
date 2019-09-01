@@ -1,25 +1,26 @@
 #include <stdio.h>
 #include <libssh/libssh.h>
 
-const char *pcap_file = "debug.server.pcap";
-ssh_pcap_file pcap;
+#include "state.h"
 
-void set_pcap(ssh_session session){
-    if(!pcap_file) return;
+void set_pcap(stateptr state){
+    if(!state->pcap_file) return;
 
-    pcap = ssh_pcap_file_new();
+    state->pcap = ssh_pcap_file_new();
 
-    if(ssh_pcap_file_open(pcap, pcap_file) == SSH_ERROR){
-        fprintf(stderr, "Error opening pcap file %s\n", pcap_file);
-        ssh_pcap_file_free(pcap);
-        pcap=NULL;
+    if(ssh_pcap_file_open(state->pcap, state->pcap_file) == SSH_ERROR){
+        fprintf(stderr, "Error opening pcap file %s\n", state->pcap_file);
+        ssh_pcap_file_free(state->pcap);
+        state->pcap = NULL;
         return;
     }
 
-    ssh_set_pcap_file(session,pcap);
+    ssh_set_pcap_file(state->in_session, state->pcap);
 }
 
-void cleanup_pcap(){
-    ssh_pcap_file_free(pcap);
-    pcap = NULL;
+void cleanup_pcap(stateptr state){
+    if (state->pcap) {
+        ssh_pcap_file_free(state->pcap);
+        state->pcap = NULL;
+    }
 }

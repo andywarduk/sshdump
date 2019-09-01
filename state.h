@@ -7,9 +7,14 @@ struct state_struct {
     int finished;
     
     int log_level;
+
     int in_port;
+
     char *out_host;
     int out_port;
+
+    char *pcap_file;
+    ssh_pcap_file pcap;
 
     ssh_event event;
     ssh_session in_session;

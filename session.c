@@ -12,32 +12,32 @@ void poll_loop(stateptr state);
 void dump_auth_methods(int methods)
 {
     if (methods & SSH_AUTH_METHOD_NONE) {
-        fprintf(stderr, " SSH_AUTH_METHOD_NONE");
+        fprintf(stdout, " SSH_AUTH_METHOD_NONE");
         methods &= ~SSH_AUTH_METHOD_NONE;
     }
     if (methods & SSH_AUTH_METHOD_PASSWORD) {
-        fprintf(stderr, " SSH_AUTH_METHOD_PASSWORD");
+        fprintf(stdout, " SSH_AUTH_METHOD_PASSWORD");
         methods &= ~SSH_AUTH_METHOD_PASSWORD;
     }
     if (methods & SSH_AUTH_METHOD_PUBLICKEY) {
-        fprintf(stderr, " SSH_AUTH_METHOD_PUBLICKEY");
+        fprintf(stdout, " SSH_AUTH_METHOD_PUBLICKEY");
         methods &= ~SSH_AUTH_METHOD_PUBLICKEY;
     }
     if (methods & SSH_AUTH_METHOD_HOSTBASED) {
-        fprintf(stderr, " SSH_AUTH_METHOD_HOSTBASED");
+        fprintf(stdout, " SSH_AUTH_METHOD_HOSTBASED");
         methods &= ~SSH_AUTH_METHOD_HOSTBASED;
     }
     if (methods & SSH_AUTH_METHOD_INTERACTIVE) {
-        fprintf(stderr, " SSH_AUTH_METHOD_INTERACTIVE");
+        fprintf(stdout, " SSH_AUTH_METHOD_INTERACTIVE");
         methods &= ~SSH_AUTH_METHOD_INTERACTIVE;
     }
     if (methods & SSH_AUTH_METHOD_GSSAPI_MIC) {
-        fprintf(stderr, " SSH_AUTH_METHOD_GSSAPI_MIC");
+        fprintf(stdout, " SSH_AUTH_METHOD_GSSAPI_MIC");
         methods &= ~SSH_AUTH_METHOD_GSSAPI_MIC;
     }
 
     if (methods != 0) {
-        fprintf(stderr, " + 0x%x", methods);
+        fprintf(stdout, " + 0x%x", methods);
     }
 }
 
@@ -80,11 +80,11 @@ int auth_password(ssh_session session, const char *user, const char *password, v
     stateptr state = (stateptr) userdata;
     int result;
 
-    fprintf(stderr, "auth_password callback called with user %s, password %s\n", user, password);
+    fprintf(stdout, "auth_password callback called with user %s, password %s\n", user, password);
 
     result = ssh_userauth_password(state->out_session, user, password);
 
-    fprintf(stderr, "auth_password callback returning %s\n", auth_result(result));
+    fprintf(stdout, "auth_password callback returning %s\n", auth_result(result));
 
     return result;
 }
@@ -97,7 +97,7 @@ int auth_none(ssh_session session, const char *user, void *userdata)
     int result;
     int auth_methods;
 
-    fprintf(stderr, "auth_none callback called with user %s\n", user);
+    fprintf(stdout, "auth_none callback called with user %s\n", user);
 
     result = ssh_userauth_none(state->out_session, user);
 
@@ -105,14 +105,14 @@ int auth_none(ssh_session session, const char *user, void *userdata)
         // Get list of valid auth methods
         auth_methods = ssh_userauth_list(state->out_session, NULL);
 
-        fprintf(stderr, "Returned auth_methods:");
+        fprintf(stdout, "Returned auth_methods:");
         dump_auth_methods(auth_methods);
-        fprintf(stderr, "\n");
+        fprintf(stdout, "\n");
 
         ssh_set_auth_methods(state->in_session, auth_methods);
     }
 
-    fprintf(stderr, "auth_none callback returning %s\n", auth_result(result));
+    fprintf(stdout, "auth_none callback returning %s\n", auth_result(result));
 
     return result;
 }
@@ -122,7 +122,7 @@ int auth_gssapi_mic(ssh_session session, const char *user, const char *principal
     (void)session;
     (void)userdata;
 
-    fprintf(stderr, "auth_gssapi_mic callback called with user %s, principal %s\n", user, principal);
+    fprintf(stdout, "auth_gssapi_mic callback called with user %s, principal %s\n", user, principal);
 
     // TODO
     return SSH_AUTH_DENIED;
@@ -135,7 +135,7 @@ int auth_pubkey(ssh_session session, const char *user, struct ssh_key_struct *pu
 
     stateptr state = (stateptr) userdata;
     ssh_key pkey;
-    int result;
+    int result = SSH_AUTH_DENIED;
     char *state_str = "[UNKNOWN]";
 
     switch(signature_state){
@@ -147,35 +147,39 @@ int auth_pubkey(ssh_session session, const char *user, struct ssh_key_struct *pu
         break;
     }
 
-    fprintf(stderr, "auth_pubkey callback called with user %s, signature state %s\n", user, state_str);
+    fprintf(stdout, "auth_pubkey callback called with user %s, signature state %s\n", user, state_str);
 
     switch(signature_state){
     case SSH_PUBLICKEY_STATE_NONE:
-        if (ssh_pki_import_pubkey_file(state->pub_key_file, &pkey) != SSH_OK){
-            fprintf(stderr, "Failed to load public key %s\n", state->pub_key_file);
-            result = SSH_AUTH_DENIED;
+        if (state->pub_key_file && state->priv_key_file) {
+            if (ssh_pki_import_pubkey_file(state->pub_key_file, &pkey) != SSH_OK){
+                fprintf(stderr, "Failed to load public key %s\n", state->pub_key_file);
+                result = SSH_AUTH_DENIED;
+            } else {
+                result = ssh_userauth_try_publickey(state->out_session, user, pkey);
+                ssh_key_free(pkey);
+            }
         } else {
-            result = ssh_userauth_try_publickey(state->out_session, user, pkey);
-            ssh_key_free(pkey);
+            fprintf(stderr, "Public and private key files must be specified for outbound connection\n");
         }
         break;
 
     case SSH_PUBLICKEY_STATE_VALID:
-        if (ssh_pki_import_privkey_file(state->priv_key_file, NULL, NULL, NULL, &pkey) != SSH_OK){
-            fprintf(stderr, "Failed to load private key %s\n", state->priv_key_file);
-            result = SSH_AUTH_DENIED;
+        if (state->pub_key_file && state->priv_key_file) {
+            if (ssh_pki_import_privkey_file(state->priv_key_file, NULL, NULL, NULL, &pkey) != SSH_OK){
+                fprintf(stderr, "Failed to load private key %s\n", state->priv_key_file);
+                result = SSH_AUTH_DENIED;
+            } else {
+                result = ssh_userauth_publickey(state->out_session, user, pkey);
+            }
         } else {
-            result = ssh_userauth_publickey(state->out_session, user, pkey);
+            fprintf(stderr, "Public and private key files must be specified for outbound connection\n");
         }
-        break;
-
-    default:
-        result = SSH_AUTH_DENIED;
         break;
 
     }
 
-    fprintf(stderr, "auth_pubkey callback returning %s\n", auth_result(result));
+    fprintf(stdout, "auth_pubkey callback returning %s\n", auth_result(result));
 
     return result;
 }
@@ -187,13 +191,13 @@ int service_request(ssh_session session, const char *service, void *userdata)
     stateptr state = (stateptr) userdata;
     int rc = -1;
 
-    fprintf(stderr, "service_request callback called with service %s\n", service);
+    fprintf(stdout, "service_request callback called with service %s\n", service);
 
     if (ssh_service_request(state->out_session, service) == SSH_OK) {
         rc = 0;
     }
 
-    fprintf(stderr, "service_request callback returnng %d\n", rc);
+    fprintf(stdout, "service_request callback returnng %d\n", rc);
 
     return rc;
 }
@@ -205,7 +209,7 @@ ssh_channel channel_open_request_session(ssh_session session, void *userdata)
     stateptr state = (stateptr) userdata;
     ssh_channel result = NULL;
 
-    fprintf(stderr, "open_request_session callback called\n");
+    fprintf(stdout, "open_request_session callback called\n");
 
     if (create_out_channel(state)) {
         if (create_in_channel(state)) {
@@ -224,7 +228,7 @@ ssh_string gssapi_select_oid(ssh_session session, const char *user, int n_oid, s
     (void)userdata;
     (void)oids;
 
-    fprintf(stderr, "gssapi_select_oid callback called, user %s, number of OIDs = %d\n", user, n_oid);
+    fprintf(stdout, "gssapi_select_oid callback called, user %s, number of OIDs = %d\n", user, n_oid);
 
     // TODO
     return NULL;
@@ -237,7 +241,7 @@ int gssapi_accept_sec_ctx(ssh_session session, ssh_string input_token, ssh_strin
     (void)output_token;
     (void)userdata;
 
-    fprintf(stderr, "gssapi_accept_sec_ctx_callback callback called\n");
+    fprintf(stdout, "gssapi_accept_sec_ctx_callback callback called\n");
 
     // TODO
     return SSH_ERROR;
@@ -250,7 +254,7 @@ int gssapi_verify_mic(ssh_session session, ssh_string mic, void *mic_buffer, siz
     (void)mic_buffer;
     (void)userdata;
 
-    fprintf(stderr, "gssapi_verify_mic callback called, mic buffer size = %ld\n", mic_buffer_size);
+    fprintf(stdout, "gssapi_verify_mic callback called, mic buffer size = %ld\n", mic_buffer_size);
 
     // TODO
     return SSH_ERROR;
@@ -309,7 +313,7 @@ void poll_loop(stateptr state)
         }
 
         // Poll for events
-        fprintf(stderr, "Entering poll loop...\n");
+        fprintf(stdout, "Entering poll loop...\n");
 
         while (!state->finished) {
             if (ssh_event_dopoll(state->event, 100) == SSH_ERROR) {
@@ -318,7 +322,7 @@ void poll_loop(stateptr state)
             }
         }
 
-        fprintf(stderr, "Exited poll loop\n");
+        fprintf(stdout, "Exited poll loop\n");
     } while(0);
 
     if (state->event) {
