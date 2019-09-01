@@ -162,7 +162,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'r':
             // RSA private key file
-            if (check_file(optarg)) {
+            if (check_file(optarg) == 0) {
                 state->rsa_key_file = optarg;
             } else {
                 fprintf(stderr, "File '%s' is not valid\n", optarg);
@@ -172,7 +172,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'd':
             // DSA private key file
-            if (check_file(optarg)) {
+            if (check_file(optarg) == 0) {
                 state->dsa_key_file = optarg;
             } else {
                 fprintf(stderr, "File '%s' is not valid\n", optarg);
@@ -182,7 +182,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'e':
             // ECDSA private key file
-            if (check_file(optarg)) {
+            if (check_file(optarg) == 0) {
                 state->ecdsa_key_file = optarg;
             } else {
                 fprintf(stderr, "File '%s' is not valid\n", optarg);
@@ -192,7 +192,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'k':
             // Public key file
-            if (check_file(optarg)) {
+            if (check_file(optarg) == 0) {
                 state->pub_key_file = optarg;
             } else {
                 fprintf(stderr, "File '%s' is not valid\n", optarg);
@@ -202,7 +202,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'K':
             // Private key file
-            if (check_file(optarg)) {
+            if (check_file(optarg) == 0) {
                 state->priv_key_file = optarg;
             } else {
                 fprintf(stderr, "File '%s' is not valid\n", optarg);
