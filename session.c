@@ -105,10 +105,18 @@ int auth_none(ssh_session session, const char *user, void *userdata)
         // Get list of valid auth methods
         auth_methods = ssh_userauth_list(state->out_session, NULL);
 
+        // Dump them out
         fprintf(stdout, "Returned auth_methods:");
         dump_auth_methods(auth_methods);
         fprintf(stdout, "\n");
 
+        // Only offer PUBLICKEY if we have key files configured
+        if (auth_methods & SSH_AUTH_METHOD_PUBLICKEY && (!state->pub_key_file || !state->priv_key_file)) {
+            fprintf(stderr, "Removing SSH_AUTH_METHOD_PUBLICKEY auth method because key files not specified\n");
+            auth_methods &= ~SSH_AUTH_METHOD_PUBLICKEY;
+        }
+
+        // Set auth methods in the inbound session
         ssh_set_auth_methods(state->in_session, auth_methods);
     }
 

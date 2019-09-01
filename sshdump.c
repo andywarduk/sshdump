@@ -20,7 +20,7 @@ struct state_struct state = {
 
 int main(int argc, char **argv){
     int result = 1;
-    ssh_bind sshbind;
+    ssh_bind sshbind = NULL;
     int r;
 
     do {

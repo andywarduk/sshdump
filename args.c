@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
 
 #include <libssh/libssh.h>
 
@@ -11,39 +12,47 @@
 
 #define KEYS_FOLDER "./keys/"
 
-static char *short_options = "l:p:o:vh:P:r:d:e:k:K:";
+static char *short_options = "l:p:o:vH:P:r:d:e:k:K:h";
 
 static struct option long_options[] = {
     {"loglevel",    required_argument, 0, 'l'},
     {"inport",      required_argument, 0, 'p'},
     {"pcap",        required_argument, 0, 'o'},
     {"verbose",     no_argument,       0, 'v'},
-    {"host",        required_argument, 0, 'h'},
+    {"host",        required_argument, 0, 'H'},
     {"outport",     required_argument, 0, 'P'},
     {"rsa",         required_argument, 0, 'r'},
     {"dsa",         required_argument, 0, 'd'},
     {"ecdsa",       required_argument, 0, 'e'},
     {"pubkey",      required_argument, 0, 'k'},
     {"privkey",     required_argument, 0, 'K'},
+    {"help",        required_argument, 0, 'h'},
     {0, 0, 0, 0}
 };
 
 void usage(char **argv)
 {
+    char *prog;
+    
+    prog = strrchr(argv[0], '/');
+    if (prog) ++prog;
+    else prog = argv[0];
+
     fprintf(stdout, "Usage:\n");
-    fprintf(stdout, "%s <args>\n", argv[0]);
+    fprintf(stdout, "%s <args>\n", prog);
     fprintf(stdout, "Where args are:\n");
     fprintf(stdout, " -l | --loglevel <num>     Set libssh log level (%d-%d)\n", SSH_LOG_WARNING, SSH_LOG_FUNCTIONS);
     fprintf(stdout, " -v | --verbose            Increase libssh log level\n");
     fprintf(stdout, " -p | --inport <num>       Set TCP/IP port to listen on, 1-65535. Default 9000\n");
     fprintf(stdout, " -o | --pcap <file>        Set packet capture file name. Defaults to none\n");
-    fprintf(stdout, " -h | --host <name>        Set host to connect to. Defaults to 'localhost''\n");
+    fprintf(stdout, " -H | --host <name>        Set host to connect to. Defaults to 'localhost''\n");
     fprintf(stdout, " -P | --outport <num>      Set TCP/IP port to connect to, 1-65535. Default 22\n");
     fprintf(stdout, " -r | --rsa <file>         Set the RSA private key file to use for the inbound connection\n");
     fprintf(stdout, " -d | --dsa <file>         Set the DSA private key file to use for the inbound connection\n");
     fprintf(stdout, " -e | --ecdsa <file>       Set the ECDSA private key file to use for the inbound connection\n");
     fprintf(stdout, " -k | --pubkey <file>      Set the public key file to use for the outbound connection\n");
     fprintf(stdout, " -K | --privkey <file>     Set the private key file to use for the outbound connection\n");
+    fprintf(stdout, " -h | --help               Display this help\n");
 }
 
 int check_file(char *file)
@@ -57,7 +66,7 @@ int check_file(char *file)
         if (rc != 0) break;
 
         // Make sure it's a regular file
-        if (S_ISREG(statbuf.st_mode)) {
+        if (!S_ISREG(statbuf.st_mode)) {
             rc = -1;
             break;
         }
@@ -72,7 +81,7 @@ int check_file(char *file)
 
 char *check_file_or_null(char *file)
 {
-    if (check_file(file)) return file;
+    if (check_file(file) == 0) return file;
     return NULL;
 }
 
@@ -138,7 +147,7 @@ int parse_args(int argc, char **argv, stateptr state)
             state->pcap_file = optarg;
             break;
 
-        case 'h':
+        case 'H':
             // Host to connect to
             state->out_host = optarg;
             break;
@@ -201,6 +210,7 @@ int parse_args(int argc, char **argv, stateptr state)
             }
             break;
 
+        case 'h':
         default:
             // Unrecognised
             usage(argv);
