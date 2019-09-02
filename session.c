@@ -72,6 +72,50 @@ char *auth_result(int auth_int)
     return result;
 };
 
+int auth (const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata)
+{
+    (void)buf;
+    (void)userdata;
+
+    fprintf(stdout, "auth callback called with prompt %s, buf len %ld, echo %d, verify %d\n",
+        prompt, len, echo, verify);
+
+    return SSH_ERROR;
+}
+
+void global_request (ssh_session session, ssh_message message, void *userdata)
+{
+    (void)session;
+    (void)message;
+    (void)userdata;
+
+    fprintf(stdout, "global_request callback called (TODO)\n");
+
+    // TODO
+}
+
+ssh_channel channel_open_request_x11 (ssh_session session, const char * originator_address, int originator_port, void *userdata)
+{
+    (void)session;
+    (void)userdata;
+
+    fprintf(stdout, "open_request_x11 callback called with originator address %s, port %d (TODO)\n",
+        originator_address, originator_port);
+
+    // TODO
+    return NULL;
+}
+
+ssh_channel channel_open_request_auth_agent (ssh_session session, void *userdata)
+{
+    (void)session;
+    (void)userdata;
+
+    fprintf(stdout, "channel_open_request_auth_agent callback called (TODO)\n");
+
+    // TODO
+    return NULL;
+}
 
 int auth_password(ssh_session session, const char *user, const char *password, void *userdata)
 {
@@ -130,7 +174,7 @@ int auth_gssapi_mic(ssh_session session, const char *user, const char *principal
     (void)session;
     (void)userdata;
 
-    fprintf(stdout, "auth_gssapi_mic callback called with user %s, principal %s\n", user, principal);
+    fprintf(stdout, "auth_gssapi_mic callback called with user %s, principal %s (TODO)\n", user, principal);
 
     // TODO
     return SSH_AUTH_DENIED;
@@ -236,7 +280,7 @@ ssh_string gssapi_select_oid(ssh_session session, const char *user, int n_oid, s
     (void)userdata;
     (void)oids;
 
-    fprintf(stdout, "gssapi_select_oid callback called, user %s, number of OIDs = %d\n", user, n_oid);
+    fprintf(stdout, "gssapi_select_oid callback called, user %s, number of OIDs = %d (TODO)\n", user, n_oid);
 
     // TODO
     return NULL;
@@ -249,7 +293,7 @@ int gssapi_accept_sec_ctx(ssh_session session, ssh_string input_token, ssh_strin
     (void)output_token;
     (void)userdata;
 
-    fprintf(stdout, "gssapi_accept_sec_ctx_callback callback called\n");
+    fprintf(stdout, "gssapi_accept_sec_ctx_callback callback called (TODO)\n");
 
     // TODO
     return SSH_ERROR;
@@ -262,7 +306,7 @@ int gssapi_verify_mic(ssh_session session, ssh_string mic, void *mic_buffer, siz
     (void)mic_buffer;
     (void)userdata;
 
-    fprintf(stdout, "gssapi_verify_mic callback called, mic buffer size = %ld\n", mic_buffer_size);
+    fprintf(stdout, "gssapi_verify_mic callback called, mic buffer size = %ld (TODO)\n", mic_buffer_size);
 
     // TODO
     return SSH_ERROR;
@@ -270,7 +314,7 @@ int gssapi_verify_mic(ssh_session session, ssh_string mic, void *mic_buffer, siz
 
 void dump_session(stateptr state)
 {
-    struct ssh_server_callbacks_struct callbacks = {
+    struct ssh_server_callbacks_struct server_callbacks = {
         .auth_password_function = &auth_password,
         .auth_none_function = &auth_none,
         .auth_gssapi_mic_function = &auth_gssapi_mic,
@@ -283,10 +327,19 @@ void dump_session(stateptr state)
         .gssapi_verify_mic_function = &gssapi_verify_mic,
     };
 
+    struct ssh_callbacks_struct callbacks = {
+        .auth_function = &auth,
+        .global_request_function = &global_request,
+        .channel_open_request_x11_function = &channel_open_request_x11,
+        .channel_open_request_auth_agent_function = &channel_open_request_auth_agent
+    };
+
     // Set up in session callbacks
     ssh_callbacks_init(&callbacks);
+    ssh_callbacks_init(&server_callbacks);
 
-    ssh_set_server_callbacks(state->in_session, &callbacks);
+    ssh_set_callbacks(state->in_session, &callbacks);
+    ssh_set_server_callbacks(state->in_session, &server_callbacks);
 
     // Enter poll loop
     poll_loop(state);
