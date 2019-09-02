@@ -121,7 +121,7 @@ int parse_args(int argc, char **argv, stateptr state)
         switch (opt){
         case 'l':
             // Log level
-            if (!check_int_arg(optarg, &(state->log_level), SSH_LOG_WARNING, SSH_LOG_FUNCTIONS)) {
+            if (check_int_arg(optarg, &(state->log_level), SSH_LOG_WARNING, SSH_LOG_FUNCTIONS) != 0) {
                 fprintf(stderr, "Log level should be between %d and %d\n", SSH_LOG_WARNING, SSH_LOG_FUNCTIONS);
                 args_ok = 0;
             }
@@ -136,7 +136,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'p':
             // Listen port
-            if (!check_int_arg(optarg, &(state->in_port), 1, 65535)) {
+            if (check_int_arg(optarg, &(state->in_port), 1, 65535) != 0) {
                 fprintf(stderr, "Listen port should be an integer between 1 and 65535\n");
                 args_ok = 0;
             }
@@ -154,7 +154,7 @@ int parse_args(int argc, char **argv, stateptr state)
 
         case 'P':
             // Port to connect to
-            if (!check_int_arg(optarg, &(state->out_port), 1, 65535)) {
+            if (check_int_arg(optarg, &(state->out_port), 1, 65535) != 0) {
                 fprintf(stderr, "Outbound port should be an integer between 1 and 65535\n");
                 args_ok = 0;
             }
