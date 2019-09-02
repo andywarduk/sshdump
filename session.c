@@ -72,46 +72,91 @@ char *auth_result(int auth_int)
     return result;
 };
 
-int auth (const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata)
+int in_auth (const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata)
 {
     (void)buf;
     (void)userdata;
 
-    fprintf(stdout, "auth callback called with prompt %s, buf len %ld, echo %d, verify %d\n",
+    fprintf(stdout, "in_auth callback called with prompt %s, buf len %ld, echo %d, verify %d\n",
         prompt, len, echo, verify);
 
     return SSH_ERROR;
 }
 
-void global_request (ssh_session session, ssh_message message, void *userdata)
+void in_global_request (ssh_session session, ssh_message message, void *userdata)
 {
     (void)session;
     (void)message;
     (void)userdata;
 
-    fprintf(stdout, "global_request callback called (TODO)\n");
+    fprintf(stdout, "in_global_request callback called (TODO)\n");
 
     // TODO
 }
 
-ssh_channel channel_open_request_x11 (ssh_session session, const char * originator_address, int originator_port, void *userdata)
+ssh_channel in_channel_open_request_x11 (ssh_session session, const char * originator_address, int originator_port, void *userdata)
 {
     (void)session;
     (void)userdata;
 
-    fprintf(stdout, "open_request_x11 callback called with originator address %s, port %d (TODO)\n",
+    fprintf(stdout, "in_open_request_x11 callback called with originator address %s, port %d (TODO)\n",
         originator_address, originator_port);
 
     // TODO
     return NULL;
 }
 
-ssh_channel channel_open_request_auth_agent (ssh_session session, void *userdata)
+ssh_channel in_channel_open_request_auth_agent (ssh_session session, void *userdata)
 {
     (void)session;
     (void)userdata;
 
-    fprintf(stdout, "channel_open_request_auth_agent callback called (TODO)\n");
+    fprintf(stdout, "in_channel_open_request_auth_agent callback called (TODO)\n");
+
+    // TODO
+    return NULL;
+}
+
+int out_auth (const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata)
+{
+    (void)buf;
+    (void)userdata;
+
+    fprintf(stdout, "out_auth callback called with prompt %s, buf len %ld, echo %d, verify %d\n",
+        prompt, len, echo, verify);
+
+    return SSH_ERROR;
+}
+
+void out_global_request (ssh_session session, ssh_message message, void *userdata)
+{
+    (void)session;
+    (void)message;
+    (void)userdata;
+
+    fprintf(stdout, "out_global_request callback called (TODO)\n");
+
+    // TODO
+}
+
+ssh_channel out_channel_open_request_x11 (ssh_session session, const char * originator_address, int originator_port, void *userdata)
+{
+    (void)session;
+    (void)userdata;
+
+    fprintf(stdout, "out_open_request_x11 callback called with originator address %s, port %d (TODO)\n",
+        originator_address, originator_port);
+
+    // TODO
+    return NULL;
+}
+
+ssh_channel out_channel_open_request_auth_agent (ssh_session session, void *userdata)
+{
+    (void)session;
+    (void)userdata;
+
+    fprintf(stdout, "out_channel_open_request_auth_agent callback called (TODO)\n");
 
     // TODO
     return NULL;
@@ -327,24 +372,35 @@ void dump_session(stateptr state)
         .gssapi_verify_mic_function = &gssapi_verify_mic,
     };
 
-    struct ssh_callbacks_struct callbacks = {
-        .auth_function = &auth,
-        .global_request_function = &global_request,
-        .channel_open_request_x11_function = &channel_open_request_x11,
-        .channel_open_request_auth_agent_function = &channel_open_request_auth_agent
+    struct ssh_callbacks_struct in_callbacks = {
+        .auth_function = &in_auth,
+        .global_request_function = &in_global_request,
+        .channel_open_request_x11_function = &in_channel_open_request_x11,
+        .channel_open_request_auth_agent_function = &in_channel_open_request_auth_agent
+    };
+
+    struct ssh_callbacks_struct out_callbacks = {
+        .auth_function = &out_auth,
+        .global_request_function = &out_global_request,
+        .channel_open_request_x11_function = &out_channel_open_request_x11,
+        .channel_open_request_auth_agent_function = &out_channel_open_request_auth_agent
     };
 
     // Set up in session callbacks
-    ssh_callbacks_init(&callbacks);
+    ssh_callbacks_init(&in_callbacks);
+    ssh_callbacks_init(&out_callbacks);
     ssh_callbacks_init(&server_callbacks);
 
-    ssh_set_callbacks(state->in_session, &callbacks);
+    ssh_set_callbacks(state->in_session, &in_callbacks);
+    ssh_set_callbacks(state->out_session, &out_callbacks);
     ssh_set_server_callbacks(state->in_session, &server_callbacks);
 
     // Enter poll loop
     poll_loop(state);
 
     // Clear in session callbacks
+    ssh_set_callbacks(state->in_session, NULL);
+    ssh_set_callbacks(state->out_session, NULL);
     ssh_set_server_callbacks(state->in_session, NULL);
 
     return;
