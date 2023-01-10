@@ -45,7 +45,7 @@ void usage(char **argv)
     fprintf(stdout, " -v | --verbose            Increase libssh log level\n");
     fprintf(stdout, " -p | --inport <num>       Set TCP/IP port to listen on, 1-65535. Default 9000\n");
     fprintf(stdout, " -o | --pcap <file>        Set packet capture file name. Defaults to none\n");
-    fprintf(stdout, " -H | --host <name>        Set host to connect to. Defaults to 'localhost''\n");
+    fprintf(stdout, " -H | --host <name>        Set host to connect to. Defaults to 'localhost'\n");
     fprintf(stdout, " -P | --outport <num>      Set TCP/IP port to connect to, 1-65535. Default 22\n");
     fprintf(stdout, " -r | --rsa <file>         Set the RSA private key file to use for the inbound connection\n");
     fprintf(stdout, " -d | --dsa <file>         Set the DSA private key file to use for the inbound connection\n");

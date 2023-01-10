@@ -242,6 +242,21 @@ int in_subsystem_request (ssh_session session, ssh_channel channel, const char *
     return rc;
 }
 
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 10, 0)
+
+int in_write_wontblock (ssh_session session, ssh_channel channel, uint32_t bytes, void *userdata)
+{
+    (void)session;
+    (void)channel;
+    (void)userdata;
+
+    fprintf(stdout, "in_write_wontblock callback called with bytes = %d\n", bytes);
+
+    return 0;
+}
+
+#else
+
 int in_write_wontblock (ssh_session session, ssh_channel channel, size_t bytes, void *userdata)
 {
     (void)session;
@@ -252,6 +267,8 @@ int in_write_wontblock (ssh_session session, ssh_channel channel, size_t bytes, 
 
     return 0;
 }
+
+#endif
 
 struct ssh_channel_callbacks_struct in_channel_callbacks = {
     .channel_data_function = in_data,
