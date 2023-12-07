@@ -186,13 +186,13 @@ int out_subsystem_request (ssh_session session, ssh_channel channel, const char 
     return 1;
 }
 
-int out_write_wontblock (ssh_session session, ssh_channel channel, size_t bytes, void *userdata)
+int out_write_wontblock (ssh_session session, ssh_channel channel, uint32_t bytes, void *userdata)
 {
     (void)session;
     (void)channel;
     (void)userdata;
 
-    fprintf(stdout, "out_write_wontblock callback called with bytes = %ld\n", bytes);
+    fprintf(stdout, "out_write_wontblock callback called with bytes = %d\n", bytes);
 
     return 0;
 }
