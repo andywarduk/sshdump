@@ -5,7 +5,7 @@ OBJS=sshdump.o args.o pcap.o session.o in_channel.o out_channel.o
 all: sshdump
 
 sshdump: $(OBJS)
-	gcc $(LDFLAGS) -o $@ $+
+	gcc $(CFLAGS) -o $@ $+ $(LDFLAGS)
 
 %.o: %.c
 	gcc $(CFLAGS) -c $^ -o $@
